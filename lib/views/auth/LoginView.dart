@@ -31,7 +31,11 @@ class LoginView extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Icon(Icons.chat_bubble_outline, color: Colors.cyan, size: 64),
+                      Image.asset(
+                        'assets/img/someone_talking_logo.png',
+                        width: 250,
+                        height: 250,
+                      ),
                       const SizedBox(height: 24),
                       TextField(
                         style: const TextStyle(color: Colors.black),

@@ -12,6 +12,7 @@ Future<bool> isLoggedIn() async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   final loggedIn = await isLoggedIn();
   runApp(MyApp(loggedIn: loggedIn));
 }

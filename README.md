@@ -22,6 +22,7 @@ Este projeto foi desenvolvido como estudo de caso para aprender desenvolvimento 
 - **SharedPreferences** - Persistência local de dados
 - **JWT Decoder** - Decodificação de tokens JWT
 - **Mask Text Input Formatter** - Máscaras para campos de texto
+- **Image Picker** - Upload de imagens da galeria/câmera
 
 ## 📋 Funcionalidades
 
@@ -46,7 +47,11 @@ Este projeto foi desenvolvido como estudo de caso para aprender desenvolvimento 
 
 ### Feed
 
-- [x] Tela de feed mockada (em desenvolvimento)
+- [x] Feed dinâmico com publicações reais
+- [x] Postagem de texto e imagem (estilo Facebook/Instagram)
+- [x] Upload de imagens
+- [x] Visualização de imagens do backend
+- [ ] Sistema de curtidas e comentários
 
 ## 🏗 Arquitetura
 
@@ -72,6 +77,9 @@ A aplicação se conecta com um backend NestJS através das seguintes rotas:
 - `POST /auth/login` - Login e geração de JWT
 - `GET /auth/{id}` - Buscar dados do usuário
 - `PUT /auth/{id}` - Atualizar dados do usuário
+- `GET /feeds` - Listar publicações
+- `POST /feeds` - Criar publicação (texto/imagem)
+- `GET /feeds/{id}` - Buscar publicação por id
 
 ### Configuração do Endpoint
 
@@ -119,25 +127,28 @@ flutter run
 dependencies:
   flutter:
     sdk: flutter
-  http: ^1.2.0
-  provider: ^6.1.1
-  shared_preferences: ^2.2.2
+  http: ^1.6.0
+  provider: ^6.1.5+1
+  shared_preferences: ^2.1.1
   jwt_decoder: ^2.0.1
-  mask_text_input_formatter: ^2.5.0
+  mask_text_input_formatter: ^2.9.0
+  image_picker: ^1.2.1
 ```
 
 ## 🎯 Roadmap
 
-- [ ] Feed dinâmico com publicações reais
+- [x] Feed dinâmico com publicações reais
+- [x] Upload de imagens
+- [x] Logo e ícone personalizados
+- [x] Postagem estilo Facebook/Instagram
 - [ ] Sistema de curtidas e comentários
 - [ ] Chat básico entre usuários
-- [ ] Upload de imagens
 - [ ] Notificações push
 - [ ] Modo escuro
 
 ## 👨‍💻 Desenvolvedor
 
-Desenvolvido por [JCZerf](https://github.com/JCZerf) como projeto de estudos.
+Desenvolvido por [JCZerf](https://github.com/JCZerf).
 
 ## 📄 Licença
 

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:someone_talking/viewmodels/feed/FeedViewModel.dart';
 import 'package:someone_talking/views/auth/ProfileView.dart';
 import 'package:someone_talking/views/feed/FeedView.dart';
 
@@ -12,10 +14,19 @@ class MainNavigationView extends StatefulWidget {
 class _MainNavigationViewState extends State<MainNavigationView> {
   int _selectedIndex = 0;
 
-  final List<Widget> _screens = [
-    const FeedView(),
-    const ProfileView(),
-  ];
+  late final List<Widget> _screens;
+
+  @override
+  void initState() {
+    super.initState();
+    _screens = [
+      ChangeNotifierProvider(
+        create: (_) => FeedViewModel(),
+        child: const FeedView(),
+      ),
+      const ProfileView(),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
