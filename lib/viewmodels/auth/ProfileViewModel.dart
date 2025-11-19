@@ -13,6 +13,7 @@ class ProfileViewModel extends ChangeNotifier {
   bool isLoading = false;
   String? errorMessage;
   String? userId;
+  String? profilePhotoUrl;
 
   Future<void> fetchUserProfile() async {
     isLoading = true;
@@ -44,6 +45,7 @@ class ProfileViewModel extends ChangeNotifier {
         email = data['email'] ?? '';
         telefone = data['phone'] ?? '';
         dataNascimento = data['birthDate'] != null ? DateTime.parse(data['birthDate']) : null;
+        profilePhotoUrl = data['profilePhotoUrl'] ?? '';
         isLoading = false;
         notifyListeners();
       } else {
@@ -107,6 +109,53 @@ class ProfileViewModel extends ChangeNotifier {
     }
   }
 
+  Future<bool> uploadProfilePhoto(String filePath) async {
+    isLoading = true;
+    errorMessage = null;
+    notifyListeners();
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final jwtToken = prefs.getString('jwtToken');
+      userId = prefs.getString('userId');
+      if (jwtToken == null || userId == null) {
+        errorMessage = 'Usuário não autenticado';
+        isLoading = false;
+        notifyListeners();
+        return false;
+      }
+
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$apiUrl/users/$userId/profile-photo'),
+      );
+      request.headers['Authorization'] = 'Bearer $jwtToken';
+      request.files.add(await http.MultipartFile.fromPath('file', filePath));
+
+      final response = await request.send();
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        final respStr = await response.stream.bytesToString();
+        final data = jsonDecode(respStr);
+        profilePhotoUrl = data['profilePhotoUrl'] ?? '';
+        await prefs.setString('userPhotoUrl', profilePhotoUrl ?? '');
+        isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        errorMessage = 'Erro ao enviar foto de perfil';
+        isLoading = false;
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      errorMessage = 'Erro: $e';
+      isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
   void setNome(String value) {
     nome = value;
     notifyListeners();
@@ -124,6 +173,11 @@ class ProfileViewModel extends ChangeNotifier {
 
   void setDataNascimento(DateTime value) {
     dataNascimento = value;
+    notifyListeners();
+  }
+
+  void setProfilePhotoUrl(String value) {
+    profilePhotoUrl = value;
     notifyListeners();
   }
 

@@ -1,10 +1,12 @@
 class User {
+  final String profilePhotoUrl;
   final String name;
   final String password;
   final String email;
   final DateTime birthDate;
   final String phone;
   User({
+    this.profilePhotoUrl = '',
     required this.name,
     required this.password,
     required this.email,
@@ -14,6 +16,7 @@ class User {
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
+      profilePhotoUrl: json['profilePhotoUrl'] ?? '',
       name: json['name'],
       password: json['password'],
       email: json['email'],
@@ -24,6 +27,7 @@ class User {
 
   Map<String, dynamic> toJson() {
     return {
+      'profilePhotoUrl': profilePhotoUrl,
       'name': name,
       'password': password,
       'email': email,

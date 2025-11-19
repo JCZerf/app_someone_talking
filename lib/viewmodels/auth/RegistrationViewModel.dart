@@ -12,6 +12,7 @@ class RegistrationViewModel extends ChangeNotifier {
   String email = '';
   DateTime? dataNascimento;
   String telefone = '';
+  String? profilePhotoUrl;
 
   bool isLoading = false;
   String? errorMessage;
@@ -23,50 +24,81 @@ class RegistrationViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> register() async {
+  Future<bool> register({String? profilePhotoFilePath}) async {
     isLoading = true;
     errorMessage = null;
     notifyListeners();
     final String phoneClean = telefone.replaceAll(RegExp(r'\D'), '');
-    debugPrint('Telefone enviado: $phoneClean');
 
     try {
-      final user = User(
-        name: nome,
-        password: senha,
-        email: email,
-        birthDate: dataNascimento ?? DateTime.now(),
-        phone: phoneClean,
-      );
+      var uri = Uri.parse('$apiUrl/auth/registration');
 
-      final body = {
-        'name': user.name,
-        'password': user.password,
-        'email': user.email,
-        'birthDate': user.birthDate.toIso8601String(),
-        'phone': user.phone,
-      };
+      if (profilePhotoFilePath != null && profilePhotoFilePath.isNotEmpty) {
+        var request = http.MultipartRequest('POST', uri);
 
-      final headers = {
-        'Content-Type': 'application/json',
-        if (jwtToken != null) 'Authorization': 'Bearer $jwtToken',
-      };
+        request.fields['name'] = nome;
+        request.fields['password'] = senha;
+        request.fields['email'] = email;
+        request.fields['birthDate'] = (dataNascimento ?? DateTime.now()).toIso8601String();
+        request.fields['phone'] = phoneClean;
 
-      final response = await http.post(
-        Uri.parse('$apiUrl/auth/registration'),
-        headers: headers,
-        body: jsonEncode(body),
-      );
+        request.files.add(await http.MultipartFile.fromPath(
+          'profilePhoto',
+          profilePhotoFilePath,
+        ));
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        isLoading = false;
-        notifyListeners();
-        return true;
+        if (jwtToken != null) {
+          request.headers['Authorization'] = 'Bearer $jwtToken';
+        }
+
+        final response = await request.send();
+        final respStr = await response.stream.bytesToString();
+
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          final data = jsonDecode(respStr);
+          profilePhotoUrl = data['profilePhotoUrl'];
+          isLoading = false;
+          notifyListeners();
+          return true;
+        } else {
+          errorMessage = 'Erro: $respStr';
+          isLoading = false;
+          notifyListeners();
+          return false;
+        }
       } else {
-        errorMessage = 'Erro: ${response.body}';
-        isLoading = false;
-        notifyListeners();
-        return false;
+        final user = User(
+          name: nome,
+          password: senha,
+          email: email,
+          birthDate: dataNascimento ?? DateTime.now(),
+          phone: phoneClean,
+          profilePhotoUrl: profilePhotoUrl ?? '',
+        );
+
+        final body = user.toJson();
+
+        final headers = {
+          'Content-Type': 'application/json',
+          if (jwtToken != null) 'Authorization': 'Bearer $jwtToken',
+        };
+
+        final response = await http.post(
+          uri,
+          headers: headers,
+          body: jsonEncode(body),
+        );
+
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          isLoading = false;
+          notifyListeners();
+          return true;
+        } else {
+          errorMessage = 'Erro: ${response.body}';
+          isLoading = false;
+          notifyListeners();
+          return false;
+        }
       }
     } catch (e) {
       isLoading = false;
@@ -98,6 +130,11 @@ class RegistrationViewModel extends ChangeNotifier {
 
   void setTelefone(String value) {
     telefone = value;
+    notifyListeners();
+  }
+
+  void setProfilePhotoUrl(String? url) {
+    profilePhotoUrl = url;
     notifyListeners();
   }
 }

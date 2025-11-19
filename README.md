@@ -7,7 +7,8 @@ Uma rede social simples desenvolvida em Flutter para fins de estudo, com funcion
 O **Someone Talking** é o front-end mobile de uma aplicação de rede social que permite aos usuários:
 
 - Criar conta e fazer login
-- Visualizar e editar perfil
+- Escolher foto de perfil no cadastro
+- Visualizar e editar perfil (incluindo foto)
 - Navegar pelo feed de publicações
 - Interagir socialmente de forma simples
 
@@ -28,7 +29,7 @@ Este projeto foi desenvolvido como estudo de caso para aprender desenvolvimento 
 
 ### Autenticação
 
-- [x] Cadastro de usuários
+- [x] Cadastro de usuários com foto de perfil
 - [x] Login com JWT
 - [x] Persistência de sessão
 - [x] Logout
@@ -36,11 +37,13 @@ Este projeto foi desenvolvido como estudo de caso para aprender desenvolvimento 
 ### Perfil
 
 - [x] Visualização de dados do usuário
-- [x] Edição de perfil (nome, email, telefone, data de nascimento)
+- [x] Edição de perfil (nome, email, telefone, data de nascimento, foto)
+- [x] Upload e atualização da foto de perfil
 - [x] Interface moderna e responsiva
 
 ### Navegação
 
+- [x] Visualização de dados do usuário
 - [x] Bottom Navigation Bar
 - [x] Transições animadas entre telas
 - [x] Verificação automática de login
@@ -51,6 +54,7 @@ Este projeto foi desenvolvido como estudo de caso para aprender desenvolvimento 
 - [x] Postagem de texto e imagem (estilo Facebook/Instagram)
 - [x] Upload de imagens
 - [x] Visualização de imagens do backend
+- [x] Exibição da foto de perfil do usuário nas postagens e no topo do feed
 - [ ] Sistema de curtidas e comentários
 
 ## 🏗 Arquitetura
@@ -73,10 +77,11 @@ lib/
 
 A aplicação se conecta com um backend NestJS através das seguintes rotas:
 
-- `POST /auth/registration` - Cadastro de usuários
+- `POST /auth/registration` - Cadastro de usuários (aceita foto de perfil via multipart)
 - `POST /auth/login` - Login e geração de JWT
 - `GET /auth/{id}` - Buscar dados do usuário
-- `PUT /auth/{id}` - Atualizar dados do usuário
+- `PUT /auth/{id}` - Atualizar dados do usuário (inclui foto)
+- `POST /users/:id/profile-photo` - Upload/atualização da foto de perfil
 - `GET /feeds` - Listar publicações
 - `POST /feeds` - Criar publicação (texto/imagem)
 - `GET /feeds/{id}` - Buscar publicação por id
@@ -139,6 +144,7 @@ dependencies:
 
 - [x] Feed dinâmico com publicações reais
 - [x] Upload de imagens
+- [x] Cadastro e edição de foto de perfil
 - [x] Logo e ícone personalizados
 - [x] Postagem estilo Facebook/Instagram
 - [ ] Sistema de curtidas e comentários
