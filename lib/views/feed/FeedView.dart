@@ -81,7 +81,7 @@ class _FeedViewState extends State<FeedView> {
                     // Foto do usuário
                     userPhotoUrl != null && userPhotoUrl!.isNotEmpty
                         ? CircleAvatar(
-                            backgroundImage: NetworkImage(userPhotoUrl!),
+                            backgroundImage: NetworkImage(getFullImageUrl(userPhotoUrl)),
                             radius: 22,
                           )
                         : CircleAvatar(
@@ -158,11 +158,19 @@ class _FeedViewState extends State<FeedView> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ListTile(
-            leading: CircleAvatar(
-              backgroundColor: Colors.cyan,
-              child: Text(feed.user.name[0].toUpperCase(),
-                  style: const TextStyle(color: Colors.white)),
-            ),
+            leading: feed.user.profilePhotoUrl.isNotEmpty
+                ? CircleAvatar(
+                    backgroundImage: NetworkImage(getFullImageUrl(feed.user.profilePhotoUrl)),
+                    radius: 22,
+                  )
+                : CircleAvatar(
+                    backgroundColor: Colors.cyan,
+                    radius: 22,
+                    child: Text(
+                      feed.user.name[0].toUpperCase(),
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
             title: Text(feed.user.name, style: const TextStyle(fontWeight: FontWeight.bold)),
             subtitle: Text(
               '${feed.createdAt.day.toString().padLeft(2, '0')}/${feed.createdAt.month.toString().padLeft(2, '0')}/${feed.createdAt.year}',

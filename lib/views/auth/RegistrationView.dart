@@ -1,10 +1,30 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:provider/provider.dart';
 import 'package:someone_talking/viewmodels/auth/RegistrationViewModel.dart';
 
-class RegistrationView extends StatelessWidget {
+class RegistrationView extends StatefulWidget {
   const RegistrationView({super.key});
+
+  @override
+  State<RegistrationView> createState() => _RegistrationViewState();
+}
+
+class _RegistrationViewState extends State<RegistrationView> {
+  File? _profileImage;
+
+  Future<void> _pickProfilePhoto() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    if (picked != null) {
+      setState(() {
+        _profileImage = File(picked.path);
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +59,29 @@ class RegistrationView extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Icon(Icons.person_add_alt_1, color: Colors.cyan, size: 64),
+                      GestureDetector(
+                        onTap: _pickProfilePhoto,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            CircleAvatar(
+                              radius: 48,
+                              backgroundColor: Colors.cyan,
+                              backgroundImage:
+                                  _profileImage != null ? FileImage(_profileImage!) : null,
+                              child: _profileImage == null
+                                  ? const Icon(Icons.camera_alt, color: Colors.white, size: 48)
+                                  : null,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Clique para adicionar foto de perfil',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.cyan[700], fontWeight: FontWeight.bold),
+                      ),
                       const SizedBox(height: 24),
                       TextField(
                         style: const TextStyle(color: Colors.black),
@@ -164,7 +206,9 @@ class RegistrationView extends StatelessWidget {
                         onPressed: viewModel.isLoading
                             ? null
                             : () async {
-                                bool success = await viewModel.register();
+                                bool success = await viewModel.register(
+                                  profilePhotoFilePath: _profileImage?.path,
+                                );
                                 if (success) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(

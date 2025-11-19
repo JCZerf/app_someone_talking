@@ -1,10 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:provider/provider.dart';
+import 'package:someone_talking/config/api_config.dart';
 import 'package:someone_talking/viewmodels/auth/ProfileViewModel.dart';
 
 class ProfileView extends StatelessWidget {
   const ProfileView({super.key});
+
+  Future<void> _pickAndUploadPhoto(BuildContext context, ProfileViewModel viewModel) async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    if (picked != null) {
+      bool success = await viewModel.uploadProfilePhoto(picked.path);
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Foto de perfil atualizada!'), backgroundColor: Colors.cyan),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(viewModel.errorMessage ?? 'Erro ao atualizar foto'),
+              backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,16 +86,46 @@ class ProfileView extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 32),
                     child: Column(
                       children: [
-                        CircleAvatar(
-                          radius: 48,
-                          backgroundColor: Colors.white,
-                          child: Text(
-                            viewModel.nome.isNotEmpty ? viewModel.nome[0].toUpperCase() : '?',
-                            style: const TextStyle(
-                              fontSize: 40,
-                              color: Colors.cyan,
-                              fontWeight: FontWeight.bold,
-                            ),
+                        GestureDetector(
+                          onTap: () => _pickAndUploadPhoto(context, viewModel),
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              CircleAvatar(
+                                radius: 48,
+                                backgroundColor: Colors.white,
+                                backgroundImage: viewModel.profilePhotoUrl != null &&
+                                        viewModel.profilePhotoUrl!.isNotEmpty
+                                    ? NetworkImage('${apiUrl}${viewModel.profilePhotoUrl!}')
+                                    : null,
+                                child: viewModel.profilePhotoUrl == null ||
+                                        viewModel.profilePhotoUrl!.isEmpty
+                                    ? Text(
+                                        viewModel.nome.isNotEmpty
+                                            ? viewModel.nome[0].toUpperCase()
+                                            : '?',
+                                        style: const TextStyle(
+                                          fontSize: 40,
+                                          color: Colors.cyan,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      )
+                                    : null,
+                              ),
+                              Positioned(
+                                bottom: 0,
+                                right: 0,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.cyan,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  padding: const EdgeInsets.all(6),
+                                  child:
+                                      const Icon(Icons.camera_alt, color: Colors.white, size: 22),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         const SizedBox(height: 12),
