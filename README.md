@@ -10,6 +10,8 @@ O **Someone Talking** é o front-end mobile de uma aplicação de rede social qu
 - Escolher foto de perfil no cadastro
 - Visualizar e editar perfil (incluindo foto)
 - Navegar pelo feed de publicações
+- Curtir publicações (sistema de likes)
+- Visualizar comentários (em breve)
 - Interagir socialmente de forma simples
 
 Este projeto foi desenvolvido como estudo de caso para aprender desenvolvimento mobile com Flutter e integração com APIs REST.
@@ -55,7 +57,10 @@ Este projeto foi desenvolvido como estudo de caso para aprender desenvolvimento 
 - [x] Upload de imagens
 - [x] Visualização de imagens do backend
 - [x] Exibição da foto de perfil do usuário nas postagens e no topo do feed
-- [ ] Sistema de curtidas e comentários
+- [x] Sistema de likes (curtidas) com coração dinâmico
+- [x] Ordenação do feed por data e número de likes
+- [x] Cards de postagens azul/ciano
+- [ ] Sistema de comentários (em breve)
 
 ## 🏗 Arquitetura
 
@@ -82,9 +87,11 @@ A aplicação se conecta com um backend NestJS através das seguintes rotas:
 - `GET /auth/{id}` - Buscar dados do usuário
 - `PUT /auth/{id}` - Atualizar dados do usuário (inclui foto)
 - `POST /users/:id/profile-photo` - Upload/atualização da foto de perfil
-- `GET /feeds` - Listar publicações
+- `GET /feeds` - Listar publicações (agora retorna likeCount e likedByMe)
 - `POST /feeds` - Criar publicação (texto/imagem)
 - `GET /feeds/{id}` - Buscar publicação por id
+- `POST /feeds/:feedId/likes` - Curtir publicação
+- `DELETE /feeds/:feedId/likes` - Remover curtida
 
 ### Configuração do Endpoint
 
@@ -147,7 +154,10 @@ dependencies:
 - [x] Cadastro e edição de foto de perfil
 - [x] Logo e ícone personalizados
 - [x] Postagem estilo Facebook/Instagram
-- [ ] Sistema de curtidas e comentários
+- [x] Sistema de likes (curtidas) com coração dinâmico
+- [x] Ordenação do feed por data e número de likes
+- [x] Cards de postagens azul/ciano
+- [ ] Sistema de comentários
 - [ ] Chat básico entre usuários
 - [ ] Notificações push
 - [ ] Modo escuro
