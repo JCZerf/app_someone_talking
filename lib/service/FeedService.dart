@@ -53,19 +53,48 @@ class FeedService {
     throw Exception('Erro ao criar feed');
   }
 
-  Future<FeedModel> updateFeed(String id, String caption, String token) async {
-    final res = await http.put(
-      Uri.parse('$apiUrl/feeds/$id'),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
-      body: json.encode({'caption': caption}),
-    );
-    if (res.statusCode == 200) {
-      return FeedModel.fromJson(json.decode(res.body));
+  Future<FeedModel> updateFeed(
+    String id,
+    String caption,
+    String token, {
+    bool removeImage = false,
+    String? imagePath,
+  }) async {
+    if (imagePath != null) {
+      var uri = Uri.parse('$apiUrl/feeds/$id');
+      var request = http.MultipartRequest('PUT', uri);
+      request.headers['Authorization'] = 'Bearer $token';
+      request.fields['caption'] = caption;
+      if (removeImage) request.fields['removeImage'] = 'true';
+      request.files.add(await http.MultipartFile.fromPath(
+        'file',
+        imagePath,
+        contentType: MediaType('image', 'jpeg'),
+      ));
+      final streamedResponse = await request.send();
+      final res = await http.Response.fromStream(streamedResponse);
+      if (res.statusCode == 200) {
+        return FeedModel.fromJson(json.decode(res.body));
+      }
+      throw Exception('Erro ao atualizar feed');
+    } else {
+      final body = {
+        'caption': caption,
+        if (removeImage) 'removeImage': true,
+      };
+      final res = await http.put(
+        Uri.parse('$apiUrl/feeds/$id'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode(body),
+      );
+      if (res.statusCode == 200) {
+        return FeedModel.fromJson(json.decode(res.body));
+      }
+      throw Exception('Erro ao atualizar feed');
     }
-    throw Exception('Erro ao atualizar feed');
   }
 
   Future<void> deleteFeed(String id, String token) async {

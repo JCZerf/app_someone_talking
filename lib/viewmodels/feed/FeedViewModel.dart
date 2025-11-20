@@ -54,11 +54,23 @@ class FeedViewModel extends ChangeNotifier {
     }
   }
 
-  Future<bool> updateFeed(String id, String caption, String token) async {
+  Future<bool> updateFeed(
+    String id,
+    String caption,
+    String token, {
+    bool removeImage = false,
+    String? imagePath,
+  }) async {
     isLoading = true;
     notifyListeners();
     try {
-      final updatedFeed = await _service.updateFeed(id, caption, token);
+      final updatedFeed = await _service.updateFeed(
+        id,
+        caption,
+        token,
+        removeImage: removeImage,
+        imagePath: imagePath,
+      );
       final index = feeds.indexWhere((f) => f.id == id);
       if (index != -1) feeds[index] = updatedFeed;
       error = null;

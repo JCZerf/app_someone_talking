@@ -1,5 +1,5 @@
-import 'FeedComment.dart';
-import 'FeedLike.dart';
+import 'FeedCommentModel.dart';
+import 'FeedLikeModel.dart';
 import 'UsersModel.dart';
 
 class FeedModel {
@@ -7,6 +7,8 @@ class FeedModel {
   final String caption;
   final String? mediaUrl;
   final User user;
+  final int likeCount;
+  final bool likedByMe;
   final List<FeedLikeModel> likes;
   final List<FeedCommentModel> comments;
   final DateTime createdAt;
@@ -17,6 +19,8 @@ class FeedModel {
     required this.caption,
     this.mediaUrl,
     required this.user,
+    required this.likeCount,
+    required this.likedByMe,
     required this.likes,
     required this.comments,
     required this.createdAt,
@@ -31,12 +35,15 @@ class FeedModel {
       user: json['user'] != null
           ? User.fromJson(json['user'])
           : User(
+              id: '',
               name: '',
               password: '',
               email: '',
               birthDate: DateTime.now(),
               phone: '',
             ),
+      likeCount: json['likeCount'] ?? 0,
+      likedByMe: json['likedByMe'] ?? false,
       likes: (json['likes'] as List<dynamic>? ?? [])
           .map((e) => FeedLikeModel.fromJson(e as Map<String, dynamic>))
           .toList(),

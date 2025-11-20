@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:someone_talking/viewmodels/feed/FeedLikeViewModel.dart';
 import 'package:someone_talking/viewmodels/feed/FeedViewModel.dart';
 import 'package:someone_talking/views/auth/ProfileView.dart';
 import 'package:someone_talking/views/feed/FeedView.dart';
@@ -20,8 +21,11 @@ class _MainNavigationViewState extends State<MainNavigationView> {
   void initState() {
     super.initState();
     _screens = [
-      ChangeNotifierProvider(
-        create: (_) => FeedViewModel(),
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => FeedViewModel()),
+          ChangeNotifierProvider(create: (_) => FeedLikeViewModel()),
+        ],
         child: const FeedView(),
       ),
       const ProfileView(),
