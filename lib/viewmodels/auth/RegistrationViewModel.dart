@@ -68,6 +68,7 @@ class RegistrationViewModel extends ChangeNotifier {
         }
       } else {
         final user = User(
+          id: '',
           name: nome,
           password: senha,
           email: email,

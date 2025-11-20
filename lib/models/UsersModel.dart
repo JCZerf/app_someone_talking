@@ -1,4 +1,5 @@
 class User {
+  final String id;
   final String profilePhotoUrl;
   final String name;
   final String password;
@@ -6,6 +7,7 @@ class User {
   final DateTime birthDate;
   final String phone;
   User({
+    required this.id,
     this.profilePhotoUrl = '',
     required this.name,
     required this.password,
@@ -16,6 +18,7 @@ class User {
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
+      id: json['id'],
       profilePhotoUrl: json['profilePhotoUrl'] ?? '',
       name: json['name'],
       password: json['password'],

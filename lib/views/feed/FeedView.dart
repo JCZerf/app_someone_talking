@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:someone_talking/config/api_config.dart';
+import 'package:someone_talking/viewmodels/feed/FeedLikeViewModel.dart';
 
 import '../../models/FeedModel.dart';
 import '../../viewmodels/feed/FeedViewModel.dart';
@@ -17,6 +18,7 @@ class FeedView extends StatefulWidget {
 }
 
 class _FeedViewState extends State<FeedView> {
+  String? userId;
   String? userName;
   String? userPhotoUrl;
 
@@ -31,13 +33,21 @@ class _FeedViewState extends State<FeedView> {
     final prefs = await SharedPreferences.getInstance();
     final jwtToken = prefs.getString('jwtToken');
     if (jwtToken != null) {
-      Provider.of<FeedViewModel>(context, listen: false).fetchFeeds(jwtToken);
+      await Provider.of<FeedViewModel>(context, listen: false).fetchFeeds(jwtToken);
+      final feeds = Provider.of<FeedViewModel>(context, listen: false).feeds;
+
+      feeds.sort((a, b) {
+        final dateCompare = b.createdAt.compareTo(a.createdAt);
+        if (dateCompare != 0) return dateCompare;
+        return b.likeCount.compareTo(a.likeCount);
+      });
     }
   }
 
   Future<void> _loadUser() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
+      userId = prefs.getString('userId');
       userName = prefs.getString('userName') ?? 'Você';
       userPhotoUrl = prefs.getString('userPhotoUrl');
     });
@@ -72,39 +82,41 @@ class _FeedViewState extends State<FeedView> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             child: Card(
-              elevation: 1,
+              elevation: 2,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.cyan.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                 child: Row(
                   children: [
-                    // Foto do usuário
                     userPhotoUrl != null && userPhotoUrl!.isNotEmpty
                         ? CircleAvatar(
                             backgroundImage: NetworkImage(getFullImageUrl(userPhotoUrl)),
                             radius: 22,
                           )
                         : CircleAvatar(
-                            backgroundColor: Colors.cyan,
+                            backgroundColor: Colors.white,
                             radius: 22,
                             child: Text(
                               userName != null && userName!.isNotEmpty
                                   ? userName![0].toUpperCase()
                                   : 'V',
-                              style: const TextStyle(color: Colors.white, fontSize: 20),
+                              style: const TextStyle(color: Colors.cyan, fontSize: 20),
                             ),
                           ),
                     const SizedBox(width: 12),
-                    // Input desabilitado
                     Expanded(
                       child: GestureDetector(
                         onTap: () => _showCreatePostModal(context),
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           decoration: BoxDecoration(
-                            color: Colors.grey.shade100,
-                            borderRadius: BorderRadius.circular(30),
-                            border: Border.all(color: Colors.grey.shade300),
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.white),
                           ),
                           child: const Text(
                             'No que você está pensando?',
@@ -150,53 +162,238 @@ class _FeedViewState extends State<FeedView> {
   }
 
   Widget _buildPost(FeedModel feed) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    final isMyPost = userId != null && feed.user.id == userId;
+    final hasLiked = feed.likedByMe;
+
+    const Color appCyan = Colors.cyan;
+    const Color appBlack = Colors.black87;
+    const Color appGrey = Colors.black54;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+      decoration: BoxDecoration(
+        color: Colors.cyan.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ListTile(
-            leading: feed.user.profilePhotoUrl.isNotEmpty
-                ? CircleAvatar(
-                    backgroundImage: NetworkImage(getFullImageUrl(feed.user.profilePhotoUrl)),
-                    radius: 22,
-                  )
-                : CircleAvatar(
-                    backgroundColor: Colors.cyan,
-                    radius: 22,
-                    child: Text(
-                      feed.user.name[0].toUpperCase(),
-                      style: const TextStyle(color: Colors.white),
-                    ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 12.0),
+            child: Row(
+              children: [
+                feed.user.profilePhotoUrl.isNotEmpty
+                    ? CircleAvatar(
+                        backgroundImage: NetworkImage(getFullImageUrl(feed.user.profilePhotoUrl)),
+                        radius: 20,
+                      )
+                    : CircleAvatar(
+                        backgroundColor: appCyan,
+                        radius: 20,
+                        child: Text(
+                          feed.user.name.isNotEmpty ? feed.user.name[0].toUpperCase() : 'U',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        feed.user.name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                          color: appBlack,
+                        ),
+                      ),
+                      Text(
+                        '${feed.createdAt.day.toString().padLeft(2, '0')}/${feed.createdAt.month.toString().padLeft(2, '0')}/${feed.createdAt.year}',
+                        style: const TextStyle(fontSize: 11, color: appGrey),
+                      ),
+                    ],
                   ),
-            title: Text(feed.user.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Text(
-              '${feed.createdAt.day.toString().padLeft(2, '0')}/${feed.createdAt.month.toString().padLeft(2, '0')}/${feed.createdAt.year}',
-              style: const TextStyle(fontSize: 12),
+                ),
+                if (isMyPost)
+                  PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_horiz, color: appGrey), //
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    onSelected: (value) async {
+                      if (value == 'edit') {
+                        _showEditPostModal(context, feed);
+                      } else if (value == 'delete') {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: const Text('Apagar publicação'),
+                            content: const Text('Tem certeza que deseja apagar esta publicação?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(ctx).pop(false),
+                                child: const Text('Cancelar'),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.of(ctx).pop(true),
+                                child: const Text('Apagar', style: TextStyle(color: Colors.red)),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (confirm == true) {
+                          final prefs = await SharedPreferences.getInstance();
+                          final jwtToken = prefs.getString('jwtToken');
+                          if (jwtToken != null) {
+                            await Provider.of<FeedViewModel>(context, listen: false)
+                                .deleteFeed(feed.id, jwtToken);
+                            _loadFeeds();
+                          }
+                        }
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                          value: 'edit',
+                          child: Row(children: [
+                            Icon(Icons.edit, size: 18),
+                            SizedBox(width: 8),
+                            Text('Editar')
+                          ])),
+                      const PopupMenuItem(
+                          value: 'delete',
+                          child: Row(children: [
+                            Icon(Icons.delete, color: Colors.red, size: 18),
+                            SizedBox(width: 8),
+                            Text('Apagar', style: TextStyle(color: Colors.red))
+                          ])),
+                    ],
+                  )
+              ],
             ),
           ),
+          if (feed.caption.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 12.0),
+              child: Text(
+                feed.caption,
+                style: const TextStyle(fontSize: 15, color: appBlack, height: 1.4),
+              ),
+            ),
           if (feed.mediaUrl != null && feed.mediaUrl!.isNotEmpty)
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
+            Container(
+              width: double.infinity,
+              constraints: const BoxConstraints(maxHeight: 400),
               child: Image.network(
                 getFullImageUrl(feed.mediaUrl),
                 fit: BoxFit.cover,
-                width: double.infinity,
-                height: 220,
                 errorBuilder: (context, error, stackTrace) => Container(
-                  height: 220,
-                  color: Colors.grey[200],
-                  child: const Center(child: Icon(Icons.broken_image, size: 48)),
+                  height: 200,
+                  color: Colors.grey[100],
+                  child: const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
                 ),
               ),
             ),
           Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(feed.caption, style: const TextStyle(fontSize: 16)),
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+            child: Row(
+              children: [
+                // Botão Like
+                Consumer<FeedLikeViewModel>(
+                  builder: (context, likeViewModel, child) {
+                    return IconButton(
+                      icon: Icon(
+                        hasLiked ? Icons.favorite : Icons.favorite_border,
+                        color: hasLiked ? Colors.red : appBlack,
+                        size: 26,
+                      ),
+                      onPressed: () async {
+                        final prefs = await SharedPreferences.getInstance();
+                        final jwtToken = prefs.getString('jwtToken');
+                        if (jwtToken != null && userId != null) {
+                          if (hasLiked) {
+                            await likeViewModel.unlikeFeed(feed.id, userId!, jwtToken);
+                          } else {
+                            await likeViewModel.likeFeed(feed.id, userId!, jwtToken);
+                          }
+                          _loadFeeds();
+                        }
+                      },
+                    );
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.chat_bubble_outline, color: appBlack, size: 24),
+                  onPressed: () {},
+                ),
+                IconButton(
+                  icon: const Icon(Icons.share_outlined, color: appBlack, size: 24),
+                  onPressed: () {},
+                ),
+                const Spacer(),
+                if (feed.likeCount > 0)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 12.0),
+                    child: Text(
+                      '${feed.likeCount} curtidas',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                    ),
+                  ),
+              ],
+            ),
           ),
-          const SizedBox(height: 8),
+          const Divider(height: 1, indent: 16, endIndent: 16),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+            decoration: BoxDecoration(
+              color: Colors.grey.withOpacity(0.05),
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(20),
+                bottomRight: Radius.circular(20),
+              ),
+            ),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 14,
+                  backgroundColor: appCyan,
+                  child: const Icon(Icons.person, size: 16, color: Colors.white),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Container(
+                    height: 36,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    alignment: Alignment.centerLeft,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: Text(
+                      'Adicione um comentário...',
+                      style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Enviar',
+                  style: TextStyle(
+                    color: appCyan.withOpacity(0.5),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                )
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -429,6 +626,212 @@ class _FeedViewState extends State<FeedView> {
               );
             },
           ),
+        );
+      },
+    );
+  }
+
+  void _showEditPostModal(BuildContext context, FeedModel feed) {
+    final captionController = TextEditingController(text: feed.caption);
+    String? imageUrl = feed.mediaUrl;
+    File? newImageFile;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.7,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+                        ),
+                        const Text('Editar publicação',
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                        TextButton(
+                          onPressed: () async {
+                            final prefs = await SharedPreferences.getInstance();
+                            final jwtToken = prefs.getString('jwtToken');
+                            final caption = captionController.text.trim();
+                            if (jwtToken != null && caption.isNotEmpty) {
+                              await Provider.of<FeedViewModel>(this.context, listen: false)
+                                  .updateFeed(
+                                feed.id,
+                                caption,
+                                jwtToken,
+                                removeImage: (imageUrl == null && newImageFile == null),
+                                imagePath: newImageFile?.path,
+                              );
+                              Navigator.of(context).pop();
+                              _loadFeeds();
+                            }
+                          },
+                          child: const Text('Salvar',
+                              style: TextStyle(color: Colors.cyan, fontWeight: FontWeight.w600)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    TextField(
+                      controller: captionController,
+                      maxLines: null,
+                      decoration: const InputDecoration(
+                        hintText: 'Edite sua legenda...',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    if (newImageFile != null)
+                      Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.file(
+                              newImageFile!,
+                              width: double.infinity,
+                              height: 180,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: GestureDetector(
+                              onTap: () {
+                                setModalState(() {
+                                  newImageFile = null;
+                                });
+                              },
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.7),
+                                  shape: BoxShape.circle,
+                                ),
+                                padding: const EdgeInsets.all(8),
+                                child: const Icon(Icons.delete, color: Colors.white, size: 22),
+                              ),
+                            ),
+                          ),
+                        ],
+                      )
+                    else if (imageUrl != null && (imageUrl?.isNotEmpty ?? false))
+                      Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.network(
+                              getFullImageUrl(imageUrl),
+                              width: double.infinity,
+                              height: 180,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: GestureDetector(
+                              onTap: () {
+                                setModalState(() {
+                                  imageUrl = null;
+                                });
+                              },
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.7),
+                                  shape: BoxShape.circle,
+                                ),
+                                padding: const EdgeInsets.all(8),
+                                child: const Icon(Icons.delete, color: Colors.white, size: 22),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        // Botão para selecionar nova imagem da galeria
+                        GestureDetector(
+                          onTap: () async {
+                            final picker = ImagePicker();
+                            final picked = await picker.pickImage(
+                              source: ImageSource.gallery,
+                              imageQuality: 85,
+                            );
+                            if (picked != null) {
+                              setModalState(() {
+                                newImageFile = File(picked.path);
+                                imageUrl = null; // Oculta imagem antiga
+                              });
+                            }
+                          },
+                          child: Container(
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(25),
+                              border: Border.all(color: Colors.grey.shade300),
+                            ),
+                            child: const Icon(
+                              Icons.photo_library_outlined,
+                              color: Colors.cyan,
+                              size: 24,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 15),
+                        // Botão para tirar foto
+                        GestureDetector(
+                          onTap: () async {
+                            final picker = ImagePicker();
+                            final picked = await picker.pickImage(
+                              source: ImageSource.camera,
+                              imageQuality: 85,
+                            );
+                            if (picked != null) {
+                              setModalState(() {
+                                newImageFile = File(picked.path);
+                                imageUrl = null;
+                              });
+                            }
+                          },
+                          child: Container(
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(25),
+                              border: Border.all(color: Colors.grey.shade300),
+                            ),
+                            child: const Icon(
+                              Icons.camera_alt_outlined,
+                              color: Colors.cyan,
+                              size: 24,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
         );
       },
     );
