@@ -68,6 +68,18 @@ class LoginViewModel extends ChangeNotifier {
         await prefs.setString('jwtToken', jwtToken!);
         await prefs.setString('userId', userId!);
 
+        final userRes = await http.get(
+          Uri.parse('$apiUrl/users/$userId'),
+          headers: {
+            'Authorization': 'Bearer $jwtToken',
+          },
+        );
+        if (userRes.statusCode == 200) {
+          final userData = jsonDecode(userRes.body);
+          await prefs.setString('userName', userData['name'] ?? '');
+          await prefs.setString('userPhotoUrl', userData['profilePhotoUrl'] ?? '');
+        }
+
         isLoading = false;
         notifyListeners();
         return true;
